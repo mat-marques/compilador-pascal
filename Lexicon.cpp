@@ -16,6 +16,7 @@ Lexicon::Lexicon(string automatonFileName, string reservedWordsFileName, int idH
 	this->hashReservedWords = new HashTable(rwHashSize);
 	this->hashIdentifiers = new HashTable(idHashSize);
 	this->config_reserved_words(reservedWordsFileName);
+	this->tokens = new List();
 	this->config_automaton(automatonFileName);
 }
 
@@ -24,7 +25,7 @@ Lexicon::Lexicon(string automatonFileName, string reservedWordsFileName, int idH
 */
 vector<string> *Lexicon::splitString(string input, char spliter) {
 	vector<string> *l = new vector<string>();
-	int start = 0, size = 0;
+	int start = 0, size = 0, end = 0;
 	for(int i = 0; i < input.length(); i++){
 		if(input[i] == spliter){
 			size = start - i;
@@ -34,8 +35,14 @@ vector<string> *Lexicon::splitString(string input, char spliter) {
 				l->push_back(input.substr(start, size));
 			start = i + 1;
 		}
+		if(input[i] == '\n' || input[i] == '\r') {
+			end = i;
+			break;
+		}
 	}
-	size = start - input.length();
+
+	size = start - end;
+
 	if(size < 0) 
 		size = size * (-1);
 	if(size > 0) 
@@ -88,56 +95,41 @@ void Lexicon::config_automaton(string automatonFileName){
 	while(!automatonFile.eof())
 	{
 		getline(automatonFile, myString);
-		//if para desconsiderar os comentarios no arquivo
-		if(!std::regex_match (myString, std::regex("//(.*)")))
+		op = myString[0];
+		switch(op)
 		{
-			op = myString[0];
-			switch(op)
-			{
-				case 'Q': //Q = Quantidade de estados
-					s1 = myString.substr(2, myString.size());
-					this->qtdStates = std::stoi(s1);
-					matrix = this->getMatrix();
-					break;
-				case 'T': //T = Transicoes
-					l = this->splitString(myString, ' ');
-					this->configureMatrix(std::stoi((*l)[1]), std::stoi((*l)[2]), (*l)[3]);
-					delete l;
-					break;
-				case 'I': //I = Estado Inicial
-					s2 = myString.substr(2, myString.size());
-					this->startState = std::stoi(s2);
-					break;
-				case 'F': //F = Estados Finais
-					l = this->splitString(myString, ' ');
-					for(int i = 1; i<l->size(); i++)
-					{
-						this->finalStates.push_back(std::stoi((*l)[i]));
-					}
-					delete l;
-					break;
-				default:
-					cout<<"ERRO NAS CONFIGURACOES DO AUTOMATO!!"<<"\n";
-					break;
-			}
-			//cout<<myString<<"\n";
+			case 'Q': //Q = Quantidade de estados
+				s1 = myString.substr(2, myString.size());
+				this->qtdStates = std::stoi(s1);
+				matrix = this->getMatrix();
+				break;
+			case 'T': //T = Transicoes
+				l = this->splitString(myString, ' ');
+				this->configureMatrix(std::stoi((*l)[1]), std::stoi((*l)[2]), (*l)[3]);
+				delete l;
+				break;
+			case 'I': //I = Estado Inicial
+				s2 = myString.substr(2, myString.size());
+				this->startState = std::stoi(s2);
+				break;
+			case 'F': //F = Estados Finais
+				l = this->splitString(myString, ' ');
+				for(int i = 1; i<l->size(); i++)
+				{
+					this->finalStates.push_back(std::stoi((*l)[i]));
+				}
+				delete l;
+				break;
 		}
+			//cout<<myString<<"\n";
 	}
-	// cout<<"Q = "<<this->qtdStates<<"\n";
-	// cout<<"I = "<<this->startState<<"\n";
-	// cout<<"F = ";
-	// for(int i = 0; i<this->finalStates.size(); i++)
-	// {
-	// 	cout<<this->finalStates[i]<<" ";
-	// }
-	// cout<<"\n";
 	automatonFile.close();
 }
 
 /*
 	Faz o processo de análise das cadeias de entrada.
 */
-void Lexicon::process_lexicon(string inputFileName, string outPutHashFile){
+void Lexicon::process_lexicon(string inputFileName, string outPutHashFile, string tokensFileName){
 	int line = 0;
 	ifstream inputFile;
 	string myString;
@@ -152,16 +144,20 @@ void Lexicon::process_lexicon(string inputFileName, string outPutHashFile){
 	while(!inputFile.eof())
 	{
 		getline(inputFile, myString);
-		cout << myString << "\n";
+		//cout << myString << "\n";
 		this->checkString(myString, line);
 		line++;
 	}
 
 	this->hashIdentifiers->show(outPutHashFile);
-
+	this->tokens->showItens2(tokensFileName);
 	this->deleteMatrix();
 	this->hashIdentifiers->removeHashTable();
 	this->hashReservedWords->removeHashTable();
+	this->tokens->removeList();
+	delete this->hashIdentifiers;
+	delete this->hashReservedWords;
+	delete this->tokens;
 	inputFile.close();
 }
 
@@ -173,15 +169,14 @@ int ** Lexicon::getMatrix(){
 	if (this->qtdStates > 0)
 	{
 		new_matrix = new int*[this->qtdStates];
-		new_matrix[0] = new int[128];
-		for (int i = 1; i < this->qtdStates; ++i)
+		for (int i = 0; i < this->qtdStates; ++i)
 		{
-			new_matrix[i] = new int[128];
+			new_matrix[i] = new int[256];
 		}
 
 		for(int i = 0; i < this->qtdStates; ++i)
 		{
-			for(int j = 0; j < 128; ++j)
+			for(int j = 0; j < 256; ++j)
 			{
 				new_matrix[i][j] = 0;
 			}
@@ -194,7 +189,7 @@ int ** Lexicon::getMatrix(){
 	Deleta uma matrix.
 */
 void Lexicon::deleteMatrix(){
-	for (int i = 1; i < this->qtdStates; ++i)
+	for (int i = 0; i < this->qtdStates; ++i)
 	{
 		delete[] this->matrix[i];
 	}
@@ -206,7 +201,7 @@ void Lexicon::deleteMatrix(){
 */
 void Lexicon::configureMatrix(int currentState, int nextState, string myString){
 	if(myString == "QC") {
-		for(int i = 0; i <= 128; i++) //a-z
+		for(int i = 0; i < 256; i++) //Todos os caracteres
 		{
 			this->matrix[currentState-1][i] = nextState;
 		}
@@ -228,6 +223,12 @@ void Lexicon::configureMatrix(int currentState, int nextState, string myString){
 		}
 	}
 	else if (myString == "0-9") {
+		for(int i = myString[0]; i<=myString[2]; i++) //0-9
+		{
+			this->matrix[currentState-1][i] = nextState;
+		}
+	}
+	else if (std::regex_match (myString, std::regex("[0-9]-[0-9]"))) {
 		for(int i = myString[0]; i<=myString[2]; i++)
 		{
 			this->matrix[currentState-1][i] = nextState;
@@ -271,31 +272,34 @@ int Lexicon::getToken(int posic){
 		return 1;
 	}
 	else if (posic == 3 || posic == 5) {
-		cout << "NÚMERO" << "\n";
+		//cout << "NÚMERO" << "\n";
 		return 2;
 	}
 	else if (posic == 6 || posic == 8 || posic == 10 || posic == 12 || posic == 14 || posic == 16 ||posic == 18 || posic == 20) {
-		cout << "SÍMBOLO ESPECIAIS" << "\n";
+		//cout << "SÍMBOLO ESPECIAL" << "\n";
 		return 3;
 	}
 	else if (posic == 7 || posic == 9 || posic == 11 || posic == 13 || posic == 15 || posic == 17 || posic == 19) {
-		cout << "SÍMBOLO ESPECIAIS COMPOSTO" << "\n";
+		//cout << "SÍMBOLO ESPECIAL COMPOSTO" << "\n";
 		return 4;
 	}
 	else {
-		return 5;
-	}
+		return 0;
+	} 
 }
 
 /*
 	Retorna o erro léxico mostrando o erro a linha e a coluna.
 */
 void Lexicon::error(int state, string error, int line, int column) {
-	if(state == 21) {
-		cout << "error:line: "<< line << " :column: "<< column << " :símbolo não reconhecido: "<< error << "\n";
-	}
-	if(state == 22) {
-		cout << "error:line: "<< line << " :column: "<< column << " :erro de identificador :" << error << "\n";
+	//cout << "-> " << error << endl;
+	if(error != " "){
+		if(state == 21) {
+			cout << "error:line: "<< line << " :column: "<< column << " :símbolo não reconhecido: "<< error << "\n";
+		}
+		if(state == 22) {
+			cout << "error:line: "<< line << " :column: "<< column - 2 << " :erro de identificador: " << error << "\n";
+		}
 	}
 }
 
@@ -309,8 +313,9 @@ void Lexicon::checkString(string myString, int line){
 	while(true)
 	{
 		//Busca o próximo estado da transição do autômato
+		//cout<< myString[index];
 		current = _nextState(current, myString[index]);
-		//cout<< myString[index] << " " << current <<"\n";
+		//cout << " " << current << endl;
 
 		if(_finalState(current)) //Verifica se a transição ocorreu
 		{
@@ -323,33 +328,46 @@ void Lexicon::checkString(string myString, int line){
 			aux = start - index;
 			if(aux < 0)
 				aux = aux * (-1);
-
+		
 			//verifica se não é um erro
-			if(finalState != 0){
+			if(finalState != 0 && finalState != 21 && finalState != 22){
 				token = getToken(finalState);
-				if(token == 1){
-					//Verifica se é palavra reservada
-					//cout << myString.substr(start, aux) << "\n";
-					if(this->hashReservedWords->searchItem2(myString.substr(start, aux))){
-						cout << "PALAVRA RESERVADA" << "\n";
-					} else {
-						// Verifica se o id já existe na hashTable
-						if(!this->hashIdentifiers->searchItem2(myString.substr(start, aux))){
-							cout << "IDENTIFICADOR" << "\n";
-							this->hashIdentifiers->insertItem(Item("", myString.substr(start, aux), ""));
-						}
+				if(token >= 1 && token <= 4){
+					switch(token){
+						case 1:
+							//Verifica se é palavra reservada
+							//cout << myString.substr(start, aux) << "\n";
+							if(this->hashReservedWords->searchItem2(myString.substr(start, aux))){
+								this->tokens->addFinal(new Item("PALAVRA RESERVADA", myString.substr(start, aux), ""));
+							} else {
+								// Verifica se o id já existe na hashTable
+								if(!this->hashIdentifiers->searchItem2(myString.substr(start, aux))){
+									this->hashIdentifiers->insertItem(Item("", myString.substr(start, aux), ""));
+									this->tokens->addFinal(new Item("IDENTIFICADOR", myString.substr(start, aux), ""));
+								}
+							}
+							break;
+						case 2:
+							this->tokens->addFinal(new Item("NÚMERO", myString.substr(start, aux), ""));
+							break;
+						case 3:
+							this->tokens->addFinal(new Item("SÍMBOLO ESPECIAL", myString.substr(start, aux), ""));
+							break;
+						case 4:
+							this->tokens->addFinal(new Item("SÍMBOLO ESPECIAL COMPOSTO", myString.substr(start, aux), ""));
+							break;
 					}
 				}
+
 				start = last_terminal + 1;
 			}
-			//verificando se é um erro
-			else{
-				if(myString[start] != ' ' && myString[start] != '\n' && myString[index] != '\0'){
-					this->error(finalState, myString.substr(start, aux), line, index);
-				}
+			if(finalState == 21 || finalState == 22) {
+				aux = start - index;
+				if(aux < 0)
+					aux = aux * (-1);
+				this->error(finalState, myString.substr(start, aux), line, index);
 				start++;
 			}
-
 			current = this->startState;
 			finalState = 0;
 			index = start-1;

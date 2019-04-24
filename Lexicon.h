@@ -15,8 +15,9 @@ class Lexicon {
         int startState, qtdStates;
         int **matrix;
         HashTable *hashReservedWords, *hashIdentifiers;
+        List *tokens;
         Lexicon(string automatonFileName, string reservedWordsFileName, int idHashSize, int rwHashSize);
-        void process_lexicon(string inputFileName, string outPutHashFile);
+        void process_lexicon(string inputFileName, string outPutHashFile, string tokensFileName);
 
     private:
         int **getMatrix();

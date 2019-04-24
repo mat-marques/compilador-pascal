@@ -106,11 +106,22 @@ Item * List::search(Item data){
 void List::showItens(ofstream & hFile, string nameList){
     Node *temp;
     temp = this->head;
-    cout << nameList << "\n";
     for(int i =0; i < this->size; i++){
         hFile << nameList << ", Posicao: " << (i + 1) << ", Palavra: "<< temp->data->var_name << "\n";
         temp = temp->next;
     }
+}
+
+void List::showItens2(string nameFile){
+    Node *temp;
+    ofstream hFile;
+    hFile.open (nameFile);
+    temp = this->head;
+    for(int i =0; i < this->size; i++){
+        hFile << temp->data->var_type << " " << temp->data->var_name << endl;
+        temp = temp->next;
+    }
+    hFile.close();
 }
 
 /*
