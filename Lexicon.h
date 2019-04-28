@@ -28,8 +28,8 @@ class Lexicon {
         void configureMatrix(int currentState, int nextState, string myString);
         int _nextState(int currentState, char c);
         bool _finalState(int currentState);
-        void error(int state, string error, int line, int column);
-        void checkString(string myString, int line);
+        bool error(int state, string error, int line, int column);
+        bool checkString(string myString, int line);
         vector<string> *splitString(string input, char spliter);
 };
 

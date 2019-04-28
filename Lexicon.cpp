@@ -89,6 +89,7 @@ void Lexicon::config_automaton(string automatonFileName){
 	{
 		cout<<"Não foi possível abrir arquivo! Programa será terminado!\n";
 		automatonFile.clear( ); //reseta o objeto leitura, para limpar memória do sistema
+		exit(0);
 	}
 
 	//Configuração da matrix e definição das variáveis de inicio
@@ -133,24 +134,29 @@ void Lexicon::process_lexicon(string inputFileName, string outPutHashFile, strin
 	int line = 0;
 	ifstream inputFile;
 	string myString;
+	bool verify;
 	inputFile.open (inputFileName, ios_base::in); //Arquivo de entrada
 
 	if(!inputFile.is_open())
 	{
 		cout<<"Não foi possível abrir arquivo! Programa será terminado!\n";
 		inputFile.clear(); //reseta o objeto leitura, para limpar memória do sistema
+		exit(0);
 	}
 
 	while(!inputFile.eof())
 	{
 		getline(inputFile, myString);
 		//cout << myString << "\n";
-		this->checkString(myString, line);
+		verify = this->checkString(myString, line);
+		if (!verify)
+			break;
 		line++;
 	}
-
-	this->hashIdentifiers->show(outPutHashFile);
-	this->tokens->showItens2(tokensFileName);
+	if(verify){
+		this->hashIdentifiers->show(outPutHashFile);
+		this->tokens->showItens2(tokensFileName);
+	}
 	this->deleteMatrix();
 	this->hashIdentifiers->removeHashTable();
 	this->hashReservedWords->removeHashTable();
@@ -291,22 +297,25 @@ int Lexicon::getToken(int posic){
 /*
 	Retorna o erro léxico mostrando o erro a linha e a coluna.
 */
-void Lexicon::error(int state, string error, int line, int column) {
+bool Lexicon::error(int state, string error, int line, int column) {
 	//cout << "-> " << error << endl;
-	if(error != " "){
+	if(error != " " && error != "\n"){
 		if(state == 21) {
-			cout << "error:line: "<< line << " :column: "<< column << " :símbolo não reconhecido: "<< error << "\n";
+			cout << "erro léxico:linha: "<< line << " :coluna: "<< column << " :símbolo não reconhecido: "<< error << "\n";
+			return true;
 		}
 		if(state == 22) {
-			cout << "error:line: "<< line << " :column: "<< column - 2 << " :erro de identificador: " << error << "\n";
+			cout << "erro léxico:linha: "<< line << " :coluna: "<< (column - error.size()) << " :erro de identificador: " << error << "\n";
+			return true;
 		}
 	}
+	return false;
 }
 
 /*
 	Verifica se uma cadeia de caracteres é aceita pelo léxico.
 */
-void Lexicon::checkString(string myString, int line){
+bool Lexicon::checkString(string myString, int line){
 	int current = this->startState, finalState = 0, last_terminal = 0, index = 0, start = 0, i = 0, token = 0;
 	int aux;
 	bool tf = false, wt = false;
@@ -339,11 +348,13 @@ void Lexicon::checkString(string myString, int line){
 							//cout << myString.substr(start, aux) << "\n";
 							if(this->hashReservedWords->searchItem2(myString.substr(start, aux))){
 								this->tokens->addFinal(new Item("PALAVRA RESERVADA", myString.substr(start, aux), ""));
+								//cout << "PALAVRA RESERVADA" << endl;
 							} else {
 								// Verifica se o id já existe na hashTable
 								if(!this->hashIdentifiers->searchItem2(myString.substr(start, aux))){
 									this->hashIdentifiers->insertItem(Item("", myString.substr(start, aux), ""));
 									this->tokens->addFinal(new Item("IDENTIFICADOR", myString.substr(start, aux), ""));
+									//cout << "IDENTIFICADOR" << endl;
 								}
 							}
 							break;
@@ -365,8 +376,13 @@ void Lexicon::checkString(string myString, int line){
 				aux = start - index;
 				if(aux < 0)
 					aux = aux * (-1);
-				this->error(finalState, myString.substr(start, aux), line, index);
-				start++;
+				if(this->error(finalState, myString.substr(start, aux), line, index)){
+					start = last_terminal + 1;
+					return false;
+				}
+				else{
+					start++;
+				}
 			}
 			current = this->startState;
 			finalState = 0;
@@ -378,4 +394,5 @@ void Lexicon::checkString(string myString, int line){
 		if(start == myString.length())
 			break;
 	}
+	return true;
 }
