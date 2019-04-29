@@ -2,7 +2,7 @@ program name;
  uses
    crt; { biblioteca do Pascal }
  var
-   n1,n2,q1,q2:string; { variáveis criadas pelo usuário do tipo string }
+   n1,n2,q1,q2:string; { variaveis criadas pelo usuario do tipo string }
  begin
    { Limpa a tela }
    clrscr;
@@ -14,8 +14,8 @@ program name;
    readln(q1);
    writeln('Digite uma qualidade para o segundo nome:');
    readln(q2);
-   writeln('O 1º nome e a 1ª qualidade são: ',n1,' ',q1);
-   writeln('O 2º nome e a 2ª qualidade são: ',n2,' ',q2);
-   { Aguarda até uma tecla ser pressionada }
+   writeln('O 1 nome e a 1 qualidade sao: ',n1,' ',q1);
+   writeln('O 2 nome e a 2 qualidade sao: ',n2,' ',q2);
+   { Aguarda ate uma tecla ser pressionada }
    readkey;
  end.

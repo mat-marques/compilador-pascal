@@ -19,8 +19,11 @@ int main() {
    cout << "Digite o nome do arquivo de saida dos tokens: ";
    cin >> tokens;
    
+   cout << "Compilando ..." << endl;
+
    l->process_lexicon("./testes/" + input, "./saida/" + output, "./saida/" + tokens);
 
+   cout << "fim ..." << endl;
    delete l;
 
    return 0;

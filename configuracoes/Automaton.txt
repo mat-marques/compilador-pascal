@@ -4,8 +4,9 @@
 //T = Transicoes
 //I = Estado Inicial
 //F = Estados Finais
+//QC = Qualquer Caracter
 Q 22
-T 1 21 QT
+T 1 21 QC
 T 1 2 a-z
 T 2 2 a-z
 T 2 2 0-9
@@ -42,7 +43,8 @@ T 1 20 }
 T 1 20 /
 T 1 20 '
 T 1 20 ,
-T 3 22 [a-z]
+T 1 20 _
+T 3 22 a-z
 //Estado Inicial
 I 1
 //Conjunto de estados Finais

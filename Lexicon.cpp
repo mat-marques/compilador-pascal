@@ -153,10 +153,10 @@ void Lexicon::process_lexicon(string inputFileName, string outPutHashFile, strin
 			break;
 		line++;
 	}
-	if(verify){
-		this->hashIdentifiers->show(outPutHashFile);
-		this->tokens->showItens2(tokensFileName);
-	}
+
+	this->hashIdentifiers->show(outPutHashFile);
+	this->tokens->showItens2(tokensFileName);
+
 	this->deleteMatrix();
 	this->hashIdentifiers->removeHashTable();
 	this->hashReservedWords->removeHashTable();
@@ -299,7 +299,7 @@ int Lexicon::getToken(int posic){
 */
 bool Lexicon::error(int state, string error, int line, int column) {
 	//cout << "-> " << error << endl;
-	if(error != " " && error != "\n"){
+	if(error != " " && error != "\n" && error != "\r"  && error != "\0"){
 		if(state == 21) {
 			cout << "erro léxico:linha: "<< line << " :coluna: "<< column << " :símbolo não reconhecido: "<< error << "\n";
 			return true;
