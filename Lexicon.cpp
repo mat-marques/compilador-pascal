@@ -353,9 +353,9 @@ bool Lexicon::checkString(string myString, int line){
 								// Verifica se o id já existe na hashTable
 								if(!this->hashIdentifiers->searchItem2(myString.substr(start, aux))){
 									this->hashIdentifiers->insertItem(Item("", myString.substr(start, aux), ""));
-									this->tokens->addFinal(new Item("IDENTIFICADOR", myString.substr(start, aux), ""));
 									//cout << "IDENTIFICADOR" << endl;
 								}
+								this->tokens->addFinal(new Item("IDENTIFICADOR", myString.substr(start, aux), ""));
 							}
 							break;
 						case 2:

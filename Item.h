@@ -11,7 +11,7 @@ class Item {
     string var_type;
     string var_name;
     string var_value;
-    Item(string v_type, string name, string value);
+    Item(string var_type, string var_name, string var_value);
     void show();
 };
 

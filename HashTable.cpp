@@ -60,7 +60,7 @@ void HashTable::show(string outFile){
   while(i < this->size){
     List *l = this->hashtable[i];
     if(l->getSize() > 0) {
-      string ln = "Lista " + std::to_string(i + 1);
+      string ln = "Lista " + std::to_string(i);
       l->showItens(hFile, ln);
     }
     i++;
